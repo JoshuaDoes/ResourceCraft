@@ -6,6 +6,10 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+base {
+    archivesName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}"
+}
+
 repositories {
 	maven { url 'https://maven.midnightdust.eu/releases' }
 	maven { url 'https://maven.terraformersmc.com/' }

@@ -34,7 +34,8 @@ jobs:
     - name: Rename and Prepare Artifact
       run: |
         mkdir -p artifact_root
-        cp build/libs/${{ steps.vars.outputs.archives_base_name }}-${{ steps.vars.outputs.version }}.jar artifact_root/ResourceCraft-v${{ steps.vars.outputs.version }}-${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.short_sha }}.jar || cp build/libs/*.jar artifact_root/
+        EXPECTED_JAR="ResourceCraft-v${{ steps.vars.outputs.version }}-${{ steps.vars.outputs.mc_version }}.jar"
+        cp build/libs/$EXPECTED_JAR artifact_root/ResourceCraft-v${{ steps.vars.outputs.version }}-${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.short_sha }}.jar || cp build/libs/*.jar artifact_root/
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
