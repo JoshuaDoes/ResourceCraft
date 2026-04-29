@@ -61,7 +61,12 @@ public class SpawnCalculator {
     public static final Map<Long, CompletableFuture<Void>> CHUNK_FUTURES = new ConcurrentHashMap<>();
     public static final Map<ChunkPos, java.util.Set<Integer>> PENDING_CONDITIONS = new ConcurrentHashMap<>();
 
-    public static void reset() {
+    public static void reset(net.minecraft.server.MinecraftServer server) {
+        if (server != null) {
+            for (ServerLevel world : server.getAllLevels()) {
+                ChunkSpawnState.get(world).clear();
+            }
+        }
         DEFERRED_SPAWNS.clear();
         CHUNK_FUTURES.forEach((k, v) -> v.cancel(true));
         CHUNK_FUTURES.clear();
@@ -71,6 +76,7 @@ public class SpawnCalculator {
         PENDING_SPAWN_QUEUE.clear();
         currentSeed = -1;
         noise = null;
+        currentSessionId++;
     }
 
     private static float getStructurePopulationGain(String structureId) {
@@ -113,6 +119,7 @@ public class SpawnCalculator {
     private static final java.util.Set<Long> INITIALIZED_CHUNKS = new java.util.HashSet<>();
     private static ResourceCraftNoise noise;
     private static long currentSeed = -1;
+    private static volatile long currentSessionId = 0;
     
     private static final Map<EntityType<?>, Float> BASE_WEIGHTS = new HashMap<>();
     private static final java.util.Queue<PendingSpawn> PENDING_SPAWN_QUEUE = new java.util.concurrent.ConcurrentLinkedQueue<>();
@@ -395,9 +402,13 @@ public class SpawnCalculator {
         final int maxBuildHeight = world.getMaxY();
         final int dimType = world.dimension() == Level.NETHER ? ENV_NETHER : (world.dimension() == Level.END ? ENV_END : -1);
 
+        final long sessionId = currentSessionId;
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
+                if (sessionId != currentSessionId) return;
                 ensureNoiseInitialized(seed);
+                ResourceCraftNoise localNoise = noise;
+                if (localNoise == null || sessionId != currentSessionId) return;
 
                 MobCategory[] categories = {
                     MobCategory.MONSTER, MobCategory.CREATURE, MobCategory.AMBIENT,
@@ -458,7 +469,7 @@ public class SpawnCalculator {
                         if (allSpawned) continue;
                     }
                     
-                    trySpawnCategoryInVerticalSlice(world, chunkPos, category, actualSurfaceY, actualGroundY, isNight, state, noise);
+                    trySpawnCategoryInVerticalSlice(world, chunkPos, category, actualSurfaceY, actualGroundY, isNight, state, localNoise);
                 }
             } catch (Exception e) {
                 ResourceCraft.LOGGER.error("ResourceCraft | [ASYNC] Error spawning mobs for chunk {}", chunkPos, e);
@@ -533,7 +544,7 @@ public class SpawnCalculator {
             boolean isWater = world.getBlockState(spawnPos).is(Blocks.WATER) || world.getFluidState(spawnPos).is(FluidTags.WATER);
             boolean isLava = world.getBlockState(spawnPos).is(Blocks.LAVA) || world.getFluidState(spawnPos).is(FluidTags.LAVA);
             
-            if (spawnPos.getY() >= actualGroundY - 2) {
+            if (spawnPos.getY() >= actualGroundY) {
                 envType = (isWater || isLava) ? ENV_SURFACE_WATER : ENV_SURFACE_LAND;
             } else {
                 envType = (isWater || isLava) ? ENV_DEEP_WATER : ENV_DEEP_LAND;
@@ -549,8 +560,8 @@ public class SpawnCalculator {
 
         // Population Control
         if (category == MobCategory.MONSTER) {
-            // Monsters: Night only on surface, anytime underground/Nether/End
-            if (!effectivelyNight && !isUnderground && !isNether && !isEnd) return false;
+            // Monsters: Night only on surface, anytime underground/Nether/End/Water
+            if (!effectivelyNight && !isUnderground && !isNether && !isEnd && envType != ENV_SURFACE_WATER && envType != ENV_DEEP_WATER) return false;
         } else if (category == MobCategory.CREATURE) {
             // Animals: Day only on surface, never underground (except Nether)
             if (effectivelyNight && !isNether) return false;
@@ -588,7 +599,7 @@ public class SpawnCalculator {
         if (entry == null) return false;
 
         float regionSize = 1.0f;
-        if (!isStructure) {
+        if (!isStructure && noise != null) {
             float baseRegionSize = (float)noise.getRegionSize(centerX, spawnPos.getY(), centerZ, actualSurfaceY);
             regionSize = baseRegionSize;
 
@@ -601,10 +612,19 @@ public class SpawnCalculator {
                     double endMult = ResourceCraftConfig.deepWater;
                     double mult = startMult * (1.0 - heightRatio) + endMult * heightRatio;
                     
-                    regionSize = (float)Math.max(ResourceCraftConfig.deepWater, baseRegionSize * mult);
+                    if (mult <= 0) {
+                        regionSize = 10000.0f;
+                    } else {
+                        regionSize = (float)(baseRegionSize / mult);
+                    }
                 }
             } else if (category == MobCategory.CREATURE) {
-                regionSize = (float)Math.max(1.0, baseRegionSize);
+                float mult = ResourceCraftConfig.surfaceCreature;
+                if (mult <= 0) {
+                    regionSize = 10000.0f;
+                } else {
+                    regionSize = (float)(baseRegionSize / mult);
+                }
             } else if (category == MobCategory.MONSTER) {
                 if (isOverworld) {
                     // Scale density from surface multiplier to base region size
@@ -613,10 +633,14 @@ public class SpawnCalculator {
                     double heightRatio = (distToBottom > 0) ? Math.max(0.0, Math.min(1.0, (double)(actualSurfaceY - spawnPos.getY()) / distToBottom)) : 0.0;
                     
                     double startMult = ResourceCraftConfig.surfaceMonster;
-                    double endMult = ResourceCraftConfig.deepMonster / Math.max(ResourceCraftConfig.deepMonster, baseRegionSize);
+                    double endMult = ResourceCraftConfig.deepMonster;
                     double mult = startMult * (1.0 - heightRatio) + endMult * heightRatio;
                     
-                    regionSize = (float)Math.max(ResourceCraftConfig.deepMonster, baseRegionSize * mult);
+                    if (mult <= 0) {
+                        regionSize = 10000.0f;
+                    } else {
+                        regionSize = (float)(baseRegionSize / mult);
+                    }
                 } else if (isNether) {
                     // Population Control: Warped Forest Endermen Mandate (100% rate = 1 region size)
                     Holder<Biome> biomeHolder = world.getBiome(spawnPos);
@@ -633,9 +657,14 @@ public class SpawnCalculator {
                         double heightRatio = (distToBottom > 0) ? Math.max(0.0, Math.min(1.0, (double)(maxY - spawnPos.getY()) / distToBottom)) : 0.0;
                         
                         double startMult = 1.0;
-                        double endMult = ResourceCraftConfig.deepMonster / Math.max(ResourceCraftConfig.deepMonster, baseRegionSize);
+                        double endMult = ResourceCraftConfig.deepMonster;
                         double mult = startMult * (1.0 - heightRatio) + endMult * heightRatio;
-                        regionSize = (float)Math.max(ResourceCraftConfig.deepMonster, baseRegionSize * mult);
+                        
+                        if (mult <= 0) {
+                            regionSize = 10000.0f;
+                        } else {
+                            regionSize = (float)(baseRegionSize / mult);
+                        }
                     }
                 } else if (world.dimension() == Level.END) {
                     if ("resourcecraft:end_boss_island".equals(structureId)) {
@@ -1054,7 +1083,8 @@ public class SpawnCalculator {
     private static boolean isAquaticType(EntityType<?> type) {
         return type == EntityType.COD || type == EntityType.SALMON || type == EntityType.SQUID || 
                type == EntityType.GLOW_SQUID || type == EntityType.DOLPHIN || type == EntityType.PUFFERFISH || 
-               type == EntityType.TROPICAL_FISH || type == EntityType.AXOLOTL || type == EntityType.TADPOLE;
+               type == EntityType.TROPICAL_FISH || type == EntityType.AXOLOTL || type == EntityType.TADPOLE ||
+               type == EntityType.DROWNED || type == EntityType.GUARDIAN || type == EntityType.ELDER_GUARDIAN;
     }
 
     private static boolean isMonsterType(EntityType<?> type) {
@@ -1133,9 +1163,19 @@ public class SpawnCalculator {
     }
 
     private static boolean isValidSpawn(ServerLevel world, BlockPos pos, EntityType<?> type, RandomSource randomSource) {
-        // [FIX] Trial Dungeon / Structure Suffocation: Ensure spawn point is air and has enough vertical space
-        if (!world.getBlockState(pos).isAir()) {
-            return false;
+        // [FIX] Aquatic/Lava Spawning: Allow submerged spawns for appropriate types
+        BlockState state = world.getBlockState(pos);
+        boolean isWater = state.is(Blocks.WATER);
+        boolean isLava = state.is(Blocks.LAVA);
+        
+        if (!state.isAir()) {
+            if (isAquaticType(type) && isWater) {
+                // Allow water
+            } else if (type == EntityType.STRIDER && isLava) {
+                // Allow lava
+            } else {
+                return false;
+            }
         }
 
         if (!SpawnPlacements.isSpawnPositionOk(type, world, pos)) {
@@ -1159,7 +1199,13 @@ public class SpawnCalculator {
     }
 
     private static WeightedList<MobSpawnSettings.SpawnerData> getSpawnsAt(ServerLevel world, BlockPos pos, MobCategory category) {
-        WeightedList<MobSpawnSettings.SpawnerData> biomeSpawns = world.getBiome(pos).value().getMobSettings().getMobs(category);
+        if (world == null || pos == null) return WeightedList.<MobSpawnSettings.SpawnerData>builder().build();
+        
+        MobSpawnSettings settings = world.getBiome(pos).value().getMobSettings();
+        if (settings == null) return WeightedList.<MobSpawnSettings.SpawnerData>builder().build();
+        
+        WeightedList<MobSpawnSettings.SpawnerData> biomeSpawns = settings.getMobs(category);
+        if (biomeSpawns == null) biomeSpawns = WeightedList.<MobSpawnSettings.SpawnerData>builder().build();
 
         // Inject Phantoms into Overworld Monster spawns
         if (category == MobCategory.MONSTER && world.dimension() == Level.OVERWORLD) {
@@ -1200,6 +1246,7 @@ public class SpawnCalculator {
 
     @SuppressWarnings("unchecked")
     private static <T> List<Weighted<T>> getWeightedEntries(WeightedList<T> list) {
+        if (list == null) return new ArrayList<>();
         try {
             // Find the first List field in WeightedList (usually "entries" or similar)
             for (Field field : WeightedList.class.getDeclaredFields()) {

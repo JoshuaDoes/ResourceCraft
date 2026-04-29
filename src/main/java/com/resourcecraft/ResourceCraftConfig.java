@@ -48,20 +48,21 @@ public class ResourceCraftConfig extends MidnightConfig {
     @Entry(category = "weights", min = 0.0f, max = 10000.0f) public static float caveSpider = 80.0f;
 
     @Comment(category = "gains", centered = true) public static Comment gainsHeader;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float surfaceMonster = 0.8f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float deepMonster = 0.3f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float surfaceWater = 1.5f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float deepWater = 0.5f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float village = 1.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float outpost = 1.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float fortress = 1.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float bastion = 1.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float ancientCity = 0.5f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float warpedForest = 0.5f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float endIsland = 1.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float swampHut = 2.0f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float trialChambers = 1.5f;
-    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static float zombieHorde = 4.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float surfaceMonster = 0.8f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float deepMonster = 0.3f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float surfaceWater = 1.5f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float deepWater = 0.5f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float surfaceCreature = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float village = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float outpost = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float fortress = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float bastion = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float ancientCity = 0.5f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float warpedForest = 0.5f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float endIsland = 1.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float swampHut = 2.0f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float trialChambers = 1.5f;
+    @Entry(category = "gains", min = 0.0f, max = 100.0f) public static volatile float zombieHorde = 4.0f;
 
     @Comment(category = "spread", centered = true) public static Comment spreadHeader;
     @Entry(category = "spread", min = 0.0f, max = 100.0f) public static float netherGlobal = 1.5f;
@@ -86,16 +87,16 @@ public class ResourceCraftConfig extends MidnightConfig {
 
     @Comment(category = "noise", centered = true) public static Comment noiseHeader;
     @Entry(category = "noise", min = 0.0f, max = 512.0f) public static float regionDecay = 48.0f;
-    @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float regionTarget = 5.0f;
-    @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float regionVariance = 7.0f;
+    @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float regionTarget = 2.0f;
+    @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float regionVariance = 3.0f;
     @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float baseDensityFactor = 3.0f;
     @Entry(category = "noise", min = 0.0f, max = 100.0f) public static float rangeFactor = 5.0f;
 
     @Comment(category = "misc", centered = true) public static Comment globalHeader;
-    @Entry(category = "misc") public static boolean deferredMigration = true;
-    @Entry(category = "misc", min = 1, max = 1024) public static int migrationMin = 24;
-    @Entry(category = "misc", min = 1, max = 1024) public static int migrationMax = 128;
-    @Entry(category = "misc", min = 0, max = 10000) public static int gracePeriod = 100;
-    @Entry(category = "misc", min = 1, max = 128) public static int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-    @Entry(category = "misc") public static boolean debugLogs = false;
+    @Entry(category = "misc") public static volatile boolean deferredMigration = true;
+    @Entry(category = "misc", min = 1, max = 1024) public static volatile int migrationMin = 24;
+    @Entry(category = "misc", min = 1, max = 1024) public static volatile int migrationMax = 128;
+    @Entry(category = "misc", min = 0, max = 10000) public static volatile int gracePeriod = 100;
+    @Entry(category = "misc", min = 1, max = 128) public static volatile int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+    @Entry(category = "misc") public static volatile boolean debugLogs = false;
 }

@@ -60,6 +60,11 @@ public class ChunkSpawnState extends SavedData {
         setDirty();
     }
 
+    public void clear() {
+        spawned.clear();
+        setDirty();
+    }
+
     public long getBitKey(ChunkPos pos, int categoryOrdinal, boolean isNight, int envType) {
         long chunkLong = ((long)pos.x() << 32) | (pos.z() & 0xFFFFFFFFL);
         

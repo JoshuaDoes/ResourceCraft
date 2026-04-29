@@ -30,12 +30,12 @@ public class ResourceCraft implements ModInitializer {
         });
 
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
-            SpawnCalculator.reset();
+            SpawnCalculator.reset(server);
             INITIAL_SPAWNS.clear();
         });
 
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            SpawnCalculator.reset();
+            SpawnCalculator.reset(server);
             INITIAL_SPAWNS.clear();
         });
 
