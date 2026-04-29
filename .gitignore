@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# Minecraft/Fabric
+run/
+.fabric/
+loom-cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# ResourceCraft Temporary Files
+build_log.txt
+deps.txt
+files.txt
+temp_sources/

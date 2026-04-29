@@ -1,0 +1,31 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.resourcecraft.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"NaturalSpawnerMixin",
+		"MobEntityMixin",
+		"ChunkLoadingMixin",
+		"BaseSpawnerMixin",
+		"BlockMixin",
+		"SculkShriekerMixin",
+		"ItemEntityMixin",
+		"ProjectileMixin",
+		"ArrowMixin",
+		"ArrowItemMixin",
+		"ItemMixin",
+		"LivingEntityMixin",
+		"EntityAccessor",
+		"PlayerListMixin",
+		"LevelMixin",
+		"ServerCommonPacketListenerImplMixin",
+		"ServerGamePacketListenerImplMixin",
+		"ServerCommonPacketListenerImplAccessor"
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
