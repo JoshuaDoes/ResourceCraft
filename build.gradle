@@ -3,8 +3,12 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+version = "v${project.mod_version}-${project.minecraft_version}"
 group = project.maven_group
+
+base {
+    archivesName = "ResourceCraft"
+}
 
 repositories {
 	maven { url 'https://maven.midnightdust.eu/releases' }
@@ -45,17 +49,7 @@ java {
     }
 }
 
-afterEvaluate {
-    tasks.named('jar') {
-        archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}-dev.jar"
-        from("LICENSE") {
-            rename { "${it}_${project.archives_base_name}"}
-        }
-    }
-
-    tasks.named('remapJar') {
-        archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}.jar"
-    }
+tasks.withType(AbstractArchiveTask).configureEach {
 }
 
 publishing {
