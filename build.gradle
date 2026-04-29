@@ -45,15 +45,17 @@ java {
     }
 }
 
-tasks.named('jar') {
-    archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}-dev.jar"
-    from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}"}
+afterEvaluate {
+    tasks.named('jar') {
+        archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}-dev.jar"
+        from("LICENSE") {
+            rename { "${it}_${project.archives_base_name}"}
+        }
     }
-}
 
-tasks.named('remapJar') {
-    archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}.jar"
+    tasks.named('remapJar') {
+        archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}.jar"
+    }
 }
 
 publishing {
