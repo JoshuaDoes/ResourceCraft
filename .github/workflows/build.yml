@@ -1,0 +1,42 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 26
+      uses: actions/setup-java@v4
+      with:
+        java-version: '26'
+        distribution: 'temurin'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+    - name: Get Short SHA and Version
+      id: vars
+      run: |
+        echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        echo "branch=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+        echo "version=$(grep 'mod_version' gradle.properties | cut -d'=' -f2 | xargs)" >> $GITHUB_OUTPUT
+        echo "mc_version=$(grep 'minecraft_version' gradle.properties | cut -d'=' -f2 | xargs)" >> $GITHUB_OUTPUT
+        echo "archives_base_name=$(grep 'archives_base_name' gradle.properties | cut -d'=' -f2 | xargs)" >> $GITHUB_OUTPUT
+    - name: Build with Gradle
+      run: ./gradlew build
+    - name: Rename and Prepare Artifact
+      run: |
+        mkdir -p artifact_root
+        cp build/libs/${{ steps.vars.outputs.archives_base_name }}-${{ steps.vars.outputs.version }}.jar artifact_root/ResourceCraft-v${{ steps.vars.outputs.version }}-${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.short_sha }}.jar || cp build/libs/*.jar artifact_root/
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ResourceCraft-v${{ steps.vars.outputs.version }}-${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.short_sha }}
+        path: artifact_root/*.jar
