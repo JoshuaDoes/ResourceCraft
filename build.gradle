@@ -45,14 +45,14 @@ java {
     }
 }
 
-jar {
+tasks.named('jar') {
     archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}-dev.jar"
-	from("LICENSE") {
-		rename { "${it}_${project.archives_base_name}"}
-	}
+    from("LICENSE") {
+        rename { "${it}_${project.archives_base_name}"}
+    }
 }
 
-remapJar {
+tasks.named('remapJar') {
     archiveFileName = "ResourceCraft-v${project.mod_version}-${project.minecraft_version}.jar"
 }
 
